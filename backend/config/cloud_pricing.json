@@ -1,0 +1,6 @@
+{
+  "cpu_standard_hourly": 0.096,
+  "gpu_t4_hourly": 0.526,
+  "engineer_hourly_rate": 65.0,
+  "deployment_risk_penalty_base": 15.0
+}
