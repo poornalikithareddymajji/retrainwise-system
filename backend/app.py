@@ -9,6 +9,8 @@ from src.l2_decision import CostBenefitDecisionEngine
 from src.l3_agent import AgenticOrchestrator
 from src.l4_action import ActionExecutor
 from data.dataset_manager import StreamDatasetManager
+from src.simulation import DriftSimulationHarness
+from src.evaluation import PolicyEvaluator
 
 app = FastAPI(title="RetrainWise Agent API")
 
@@ -25,6 +27,10 @@ engine = CostBenefitDecisionEngine()
 agent = AgenticOrchestrator(engine)
 executor = ActionExecutor()
 data_manager = StreamDatasetManager()
+
+# Initialize simulation and evaluation components
+harness = DriftSimulationHarness()
+evaluator = PolicyEvaluator()
 
 @app.get("/health")
 def health():
@@ -77,3 +83,9 @@ def step_stream():
         "ground_truth": ground_truth,
         "agent_response": agent_output
     }
+
+@app.get("/api/simulation/run")
+def run_simulation(drift_type: str = "sudden"):
+    traces = harness.run_simulation(drift_type)
+    metrics = evaluator.evaluate_all(traces)
+    return {"traces": traces, "evaluation": metrics}
