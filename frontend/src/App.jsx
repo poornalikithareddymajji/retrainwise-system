@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Activity, ShieldAlert, Cpu, IndianRupee, Database, Upload } from 'lucide-react';
+import DecisionReport from './components/DecisionReport';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
@@ -219,6 +220,11 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Explainable Decision Report Component */}
+      {latestReport && (
+        <DecisionReport report={latestReport} />
+      )}
     </div>
   );
 }
