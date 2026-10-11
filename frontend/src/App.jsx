@@ -3,7 +3,7 @@ import {
   LineChart, Line, BarChart, Bar, AreaChart, Area, 
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend 
 } from 'recharts';
-import { Activity, ShieldAlert, Cpu, IndianRupee, Database, Upload, BarChart2, GitPullRequest } from 'lucide-react';
+import { Activity, ShieldAlert, Cpu, IndianRupee, Database, Upload, BarChart2 } from 'lucide-react';
 import DecisionReport from './components/DecisionReport';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
@@ -103,8 +103,8 @@ export default function App() {
         {
           step: newStep,
           dataDriftPValue: Number((telemetry.drift_p_value || 0.5).toFixed(2)),
-          staleness: Number((telemetry.staleness_score || 0).toFixed(2)),
           errorRate: Number(((telemetry.rolling_error_rate || 0) * 100).toFixed(1)),
+          staleness: Number((telemetry.staleness_score || 0).toFixed(2)),
           benefit: Number(benefitInr.toFixed(2))
         }
       ]);
@@ -202,33 +202,36 @@ export default function App() {
         </div>
       </div>
 
-      {/* 3 Distinct Chart Types Section (Data Drift, Model Staleness, and Net Benefit) */}
+      {/* 3 Distinct Chart Types Section */}
       <h2 className="text-xl font-semibold mb-4 text-slate-200 flex items-center gap-2">
         <BarChart2 className="w-5 h-5 text-sky-400" /> Multi-Dimensional Drift & Economic Analytics ({activeDataset})
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
-        {/* Chart 1: Line Chart for Data Drift (p-values) */}
+        {/* Chart 1: Multi-Line Chart (Data Drift p-value & Model Error Rate) */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
-          <h3 className="text-sm font-semibold mb-1 text-sky-400">Chart 1: Data Drift (KS-Test $p$-value)</h3>
-          <p className="text-xs text-slate-500 mb-3">Lower values indicate significant distribution shifts.</p>
+          <h3 className="text-sm font-semibold mb-1 text-sky-400">Chart 1: Drift vs Error Correlation</h3>
+          <p className="text-xs text-slate-500 mb-3">Comparing Data Drift ($p$-value) and Error Rate (%)</p>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={metricsHistory}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="step" stroke="#94a3b8" fontSize={12} />
-                <YAxis domain={[0, 1]} stroke="#94a3b8" fontSize={12} />
+                <YAxis yAxisId="left" domain={[0, 1]} stroke="#38bdf8" fontSize={12} />
+                <YAxis yAxisId="right" orientation="right" domain={[0, 100]} stroke="#f43f5e" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }} />
-                <Line type="monotone" dataKey="dataDriftPValue" stroke="#38bdf8" strokeWidth={2} dot={false} name="Drift p-value" />
+                <Legend wrapperStyle={{ fontSize: '10px' }} />
+                <Line yAxisId="left" type="monotone" dataKey="dataDriftPValue" stroke="#38bdf8" strokeWidth={2} dot={false} name="Drift p-value" />
+                <Line yAxisId="right" type="monotone" dataKey="errorRate" stroke="#f43f5e" strokeWidth={2} dot={false} name="Error Rate %" />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Chart 2: Area Chart for Model Staleness & Error Rate */}
+        {/* Chart 2: Area Chart for Model Staleness */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
-          <h3 className="text-sm font-semibold mb-1 text-indigo-400">Chart 2: Model Staleness & Errors</h3>
-          <p className="text-xs text-slate-500 mb-3">Tracks model aging versus performance degradation.</p>
+          <h3 className="text-sm font-semibold mb-1 text-indigo-400">Chart 2: Model Staleness Index</h3>
+          <p className="text-xs text-slate-500 mb-3">Tracks cumulative aging and time since last update.</p>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={metricsHistory}>
@@ -314,4 +317,4 @@ export default function App() {
       )}
     </div>
   );
-}
+}1
