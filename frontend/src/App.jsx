@@ -3,7 +3,7 @@ import {
   LineChart, Line, BarChart, Bar, AreaChart, Area, 
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend 
 } from 'recharts';
-import { Activity, ShieldAlert, Cpu, IndianRupee, Database, Upload, BarChart2 } from 'lucide-react';
+import { Activity, ShieldAlert, Cpu, IndianRupee, Database, Upload, BarChart2, GitPullRequest } from 'lucide-react';
 import DecisionReport from './components/DecisionReport';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
@@ -102,8 +102,9 @@ export default function App() {
         ...prev.slice(-29),
         {
           step: newStep,
-          errorRate: Number(((telemetry.rolling_error_rate || 0) * 100).toFixed(1)),
+          dataDriftPValue: Number((telemetry.drift_p_value || 0.5).toFixed(2)),
           staleness: Number((telemetry.staleness_score || 0).toFixed(2)),
+          errorRate: Number(((telemetry.rolling_error_rate || 0) * 100).toFixed(1)),
           benefit: Number(benefitInr.toFixed(2))
         }
       ]);
@@ -158,21 +159,21 @@ export default function App() {
         </div>
       </header>
 
-      {/* Metrics Row (Live Numbers View) */}
+      {/* Metrics Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span>Rolling Error Rate</span>
+            <span>Data Drift ($p$-value)</span>
             <Activity className="w-5 h-5 text-sky-400" />
           </div>
           <div className="text-2xl font-bold">
-            {latestReport && latestReport.telemetry ? `${(latestReport.telemetry.rolling_error_rate * 100).toFixed(1)}%` : '0%'}
+            {latestReport && latestReport.telemetry ? (latestReport.telemetry.drift_p_value ?? 0.5).toFixed(2) : '0.50'}
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span>Staleness Index</span>
+            <span>Model Staleness</span>
             <Cpu className="w-5 h-5 text-indigo-400" />
           </div>
           <div className="text-2xl font-bold">
@@ -201,55 +202,58 @@ export default function App() {
         </div>
       </div>
 
-      {/* 3 Distinct Chart Types Section */}
+      {/* 3 Distinct Chart Types Section (Data Drift, Model Staleness, and Net Benefit) */}
       <h2 className="text-xl font-semibold mb-4 text-slate-200 flex items-center gap-2">
-        <BarChart2 className="w-5 h-5 text-sky-400" /> Visual Telemetry Analytics ({activeDataset})
+        <BarChart2 className="w-5 h-5 text-sky-400" /> Multi-Dimensional Drift & Economic Analytics ({activeDataset})
       </h2>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
-        {/* Chart 1: Line Chart (Error Rate Progression) */}
+        {/* Chart 1: Line Chart for Data Drift (p-values) */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
-          <h3 className="text-sm font-semibold mb-3 text-sky-400">Chart 1: Error Rate Trend (%)</h3>
-          <div className="h-56">
+          <h3 className="text-sm font-semibold mb-1 text-sky-400">Chart 1: Data Drift (KS-Test $p$-value)</h3>
+          <p className="text-xs text-slate-500 mb-3">Lower values indicate significant distribution shifts.</p>
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={metricsHistory}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="step" stroke="#94a3b8" fontSize={12} />
-                <YAxis stroke="#94a3b8" fontSize={12} />
+                <YAxis domain={[0, 1]} stroke="#94a3b8" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }} />
-                <Line type="monotone" dataKey="errorRate" stroke="#38bdf8" strokeWidth={2} dot={false} name="Error Rate %" />
+                <Line type="monotone" dataKey="dataDriftPValue" stroke="#38bdf8" strokeWidth={2} dot={false} name="Drift p-value" />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Chart 2: Area Chart (Net Benefit Accumulation in ₹) */}
+        {/* Chart 2: Area Chart for Model Staleness & Error Rate */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
-          <h3 className="text-sm font-semibold mb-3 text-emerald-400">Chart 2: Net Benefit Accumulation (₹)</h3>
-          <div className="h-56">
+          <h3 className="text-sm font-semibold mb-1 text-indigo-400">Chart 2: Model Staleness & Errors</h3>
+          <p className="text-xs text-slate-500 mb-3">Tracks model aging versus performance degradation.</p>
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={metricsHistory}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="step" stroke="#94a3b8" fontSize={12} />
                 <YAxis stroke="#94a3b8" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }} />
-                <Area type="monotone" dataKey="benefit" stroke="#34d399" fill="#065f46" fillOpacity={0.4} name="Benefit (₹)" />
+                <Area type="monotone" dataKey="staleness" stroke="#818cf8" fill="#4338ca" fillOpacity={0.3} name="Staleness Score" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Chart 3: Bar Chart (Policy Retrain Count Comparison) */}
+        {/* Chart 3: Bar Chart for Policy Retrain Frequency Comparison */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl">
-          <h3 className="text-sm font-semibold mb-3 text-indigo-400">Chart 3: Policy Retrain Comparison</h3>
-          <div className="h-56">
+          <h3 className="text-sm font-semibold mb-1 text-emerald-400">Chart 3: Policy Retrain Comparison</h3>
+          <p className="text-xs text-slate-500 mb-3">Retrain count across baseline strategies.</p>
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={multiDatasetComparison}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                 <XAxis dataKey="dataset" stroke="#94a3b8" fontSize={10} />
                 <YAxis stroke="#94a3b8" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155' }} />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                <Legend wrapperStyle={{ fontSize: '10px' }} />
                 <Bar dataKey="Calendar" fill="#f87171" name="Calendar" />
                 <Bar dataKey="DriftTrigger" fill="#fbbf24" name="Drift-Trigger" />
                 <Bar dataKey="RetrainWise" fill="#34d399" name="RetrainWise" />
@@ -260,10 +264,9 @@ export default function App() {
 
       </div>
 
-      {/* Multi-Dataset Empirical Results Comparison Table & Agent Terminal */}
+      {/* Results Table & Agent Justification */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         
-        {/* Multi-Dataset Benchmarking Table */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-xl">
           <h2 className="text-lg font-semibold mb-4 text-slate-200">Results Comparison Across All Datasets</h2>
           <div className="overflow-x-auto">
@@ -292,7 +295,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Agent Terminal */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl flex flex-col justify-between">
           <div>
             <h2 className="text-lg font-semibold mb-4 text-slate-200">Agent Decision Justification</h2>
@@ -307,7 +309,6 @@ export default function App() {
 
       </div>
 
-      {/* Explainable Decision Report Component */}
       {latestReport && (
         <DecisionReport report={latestReport} />
       )}
